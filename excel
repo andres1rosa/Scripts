@@ -1,0 +1,46 @@
+# ----- Edit these Variables for your own Use Case ----- #
+$PASSWORD_FOR_USERS   = "Password1"
+$EXCEL_PATH           = ".\UserDetails.xlsx"
+# ------------------------------------------------------ #
+
+# Import the Excel module (ensure it's installed)
+Import-Module ImportExcel
+
+# Read Excel data
+$USER_DETAILS_LIST = Import-Excel -Path $EXCEL_PATH
+
+# Convert the password to a secure string
+$password = ConvertTo-SecureString $PASSWORD_FOR_USERS -AsPlainText -Force
+
+# Create an Organizational Unit if it does not already exist
+$ouPath = "ou=_USERS,$(([ADSI]"").distinguishedName)"
+try {
+    New-ADOrganizationalUnit -Name "_USERS" -ProtectedFromAccidentalDeletion $false -Path $ouPath
+} catch {
+    Write-Host "OU already exists or error creating OU." -ForegroundColor Red
+}
+
+# Loop through each row in the Excel file
+foreach ($user in $USER_DETAILS_LIST) {
+    $first = $user.FirstName.ToLower()
+    $last = $user.LastName.ToLower()
+    $city = $user.City
+    $department = $user.Department
+    $phone = $user.Phone
+    $username = "$($first.Substring(0,1))$($last)".ToLower()
+    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan
+    
+    # Create a new AD user with additional details
+    New-AdUser -AccountPassword $password `
+               -GivenName $first `
+               -Surname $last `
+               -DisplayName "$first $last" `
+               -Name $username `
+               -City $city `
+               -Department $department `
+               -OfficePhone $phone `
+               -EmployeeID $username `
+               -PasswordNeverExpires $true `
+               -Path $ouPath `
+               -Enabled $true
+}
