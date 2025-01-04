@@ -1,0 +1,41 @@
+# ----- Edit these Variables for your own Use Case ----- #
+$PASSWORD_FOR_USERS   = "Password1"
+$EXCEL_PATH           = ".\UserDetails.xlsx"
+# ------------------------------------------------------ #
+
+# Import the Excel module (ensure it's installed)
+Import-Module ImportExcel
+
+# Read Excel data
+$USER_DETAILS_LIST = Import-Excel -Path $EXCEL_PATH
+
+# Convert the password to a secure string
+$password = ConvertTo-SecureString $PASSWORD_FOR_USERS -AsPlainText -Force
+
+# Define the path to the existing OU
+$ouPath = "OU=Users,$(([ADSI]"").distinguishedName)"
+
+# Loop through each row in the Excel file
+foreach ($user in $USER_DETAILS_LIST) {
+    $first = $user.FirstName.ToLower()
+    $last = $user.LastName.ToLower()
+    $city = $user.City
+    $department = $user.Department
+    $phone = $user.Phone
+    $username = "$($first.Substring(0,1))$($last)".ToLower()
+    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan
+    
+    # Create a new AD user with additional details
+    New-AdUser -AccountPassword $password `
+               -GivenName $first `
+               -Surname $last `
+               -DisplayName "$first $last" `
+               -Name $username `
+               -City $city `
+               -Department $department `
+               -OfficePhone $phone `
+               -EmployeeID $username `
+               -PasswordNeverExpires $true `
+               -Path $ouPath `
+               -Enabled $true
+}
