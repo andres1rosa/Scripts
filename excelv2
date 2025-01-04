@@ -1,6 +1,6 @@
 # ----- Edit these Variables for your own Use Case ----- #
 $PASSWORD_FOR_USERS   = "Password1"
-$EXCEL_PATH           = ".\UserDetails.xlsx"
+$EXCEL_PATH           = "C:\Users\a-rosa\Downloads\UserDetails.xlsx"
 # ------------------------------------------------------ #
 
 # Import the Excel module (ensure it's installed)
@@ -39,3 +39,4 @@ foreach ($user in $USER_DETAILS_LIST) {
                -Path $ouPath `
                -Enabled $true
 }
+
